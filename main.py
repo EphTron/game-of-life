@@ -22,7 +22,9 @@ class App:
         self.play = False
         self.timer = time.time()
         self.tick_time = tick_time
+
         self.mouse_lock = False
+        self.mouse_mode = 1
         self.running_time = 0.0
         self.elapsed_time = 0.0
         self.last_rect = None
@@ -154,11 +156,10 @@ class App:
     def clear_rects(self):
         for rect in self.rects:
             rect.set_active(0)
-            rect.flipped = False
+            
 
     def draw_rects(self):
         for rect in self.rects:
-            #rect.toggle_active()
             rect.draw(self.screen)
 
     def run(self):
@@ -195,24 +196,36 @@ class App:
                 elif event.type == KEYUP:
                     pass
                     #if event.key == K_w:
-                    #    self.map.set_map_visibility(True)
+                    #    ...
                 if event.type == MOUSEBUTTONDOWN:
                     self.mouse_lock = True
                     _pos = pygame.mouse.get_pos()
                     _rect = self.get_rect_by_pos(_pos[0],_pos[1])
-                    _rect.toggle_active() 
+                    _mode = pygame.mouse.get_pressed()
+                    if _mode[0] == 1:
+                        _rect.set_active(1) 
+                    elif _mode[2] == 1:
+                        _rect.set_active(0) 
+                            
                     self.last_rect = _rect
-                    self.flipped = True
+                    
 
                 if self.mouse_lock and event.type == MOUSEMOTION:
-                    if 
                     _pos = pygame.mouse.get_pos()
                     _rect = self.get_rect_by_pos(_pos[0],_pos[1])
-                    _rect.toggle_active() 
+                    if _rect != self.last_rect:
+                        _mode = pygame.mouse.get_pressed()
+                        if _mode[0] == 1:
+                            _rect.set_active(1) 
+                            
+                        elif _mode[2] == 1:
+                            _rect.set_active(0) 
+                            
 
                 if event.type == MOUSEBUTTONUP:
                     
                     self.mouse_lock = False
+                 
                     
 
 
@@ -226,7 +239,7 @@ class Rect:
         self.row = row
         self.size = size
         self.active = flag
-        self.flipped = False # changed by mouse click
+        
         self.next_gen_active = flag
         self.color = (0, 0, 0)
         self.neighbors = []
@@ -274,7 +287,7 @@ class Rect:
 
     def next_gen(self):
         self.set_active(self.next_gen_active)
-        self.flipped = False
+        
 
     def toggle_active(self):
         self.active = not self.active
