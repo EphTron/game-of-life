@@ -22,9 +22,10 @@ class App:
         self.play = False
         self.timer = time.time()
         self.tick_time = tick_time
+        self.mouse_lock = False
         self.running_time = 0.0
         self.elapsed_time = 0.0
-
+        self.last_rect = None
 
         self.proxy_alive = Rect(-1,0,0,0,0,(0,0), 1)
         self.proxy_dead = Rect(-2,0,0,0,0,(0,0), 0)
@@ -68,6 +69,7 @@ class App:
                                  (idx % self.cols),
                                  (idx / self.cols),
                                  (self.rect_w,self.rect_h),
+                                 #1)
                                  random.getrandbits(1))
                 self.rects.append(_new_rect)
 
@@ -94,17 +96,15 @@ class App:
 
             
     def get_rect_by_col_row(self, col, row):
-        #print "next",col,row
         #set proxy to be either dead or alive
         _proxy = self.proxy_dead
+        #_proxy = self.proxy_alive
         if col >= 0 and row >= 0: #if bigger than 0
             if col >= self.cols:  #if too big
                 return _proxy
             elif row >= self.rows:#if too big
                 return _proxy
             else:                 # good candidate   
-                #print "rows id",row * self.cols
-                #print "cols id",col % self.cols
                 _idx = row * self.cols + (col % self.cols)
                 try:
                     return self.rects[_idx]
@@ -114,7 +114,6 @@ class App:
             return _proxy
 
     def get_rect_by_pos(self,x,y):
-        print x ,y 
         _col = x / self.rect_w 
         _residual_col = x % self.rect_w
         #_col = _col - _residual_col
@@ -122,7 +121,6 @@ class App:
         _residual_row = y % self.rect_h
         #_row = _row - _residual_row
         _idx = _row * self.cols + (_col % self.cols)
-        print _col, _row
         try:
             return self.rects[_idx]
         except IndexError:
@@ -141,14 +139,12 @@ class App:
     def add_color(self, color):
         self.colors.append(color)
 
-
     def get_color(self, color):
         return self.colors[color]
 
     def update_timer(self):
         _time = time.time()
         self.elapsed_time += self.delta_time(_time, self.timer)
-        #print self.elapsed_time
         self.running_time += self.elapsed_time
         self.timer = _time 
 
@@ -158,6 +154,7 @@ class App:
     def clear_rects(self):
         for rect in self.rects:
             rect.set_active(0)
+            rect.flipped = False
 
     def draw_rects(self):
         for rect in self.rects:
@@ -168,8 +165,6 @@ class App:
 
         # run the game loop
         while True:
-
-
             self.update_timer()
             if self.elapsed_time >= self.tick_time:
                 self.screen.fill(self.colors["WHITE"])
@@ -201,11 +196,23 @@ class App:
                     pass
                     #if event.key == K_w:
                     #    self.map.set_map_visibility(True)
-                if event.type == MOUSEBUTTONUP:
+                if event.type == MOUSEBUTTONDOWN:
+                    self.mouse_lock = True
                     _pos = pygame.mouse.get_pos()
                     _rect = self.get_rect_by_pos(_pos[0],_pos[1])
-                    _rect.set_active(1)
-                    print _rect.id
+                    _rect.toggle_active() 
+                    self.last_rect = _rect
+                    self.flipped = True
+
+                if self.mouse_lock and event.type == MOUSEMOTION:
+                    if 
+                    _pos = pygame.mouse.get_pos()
+                    _rect = self.get_rect_by_pos(_pos[0],_pos[1])
+                    _rect.toggle_active() 
+
+                if event.type == MOUSEBUTTONUP:
+                    
+                    self.mouse_lock = False
                     
 
 
@@ -217,9 +224,9 @@ class Rect:
         self.y = y
         self.col = col 
         self.row = row
-        #print "created rect", self.id, col ,row
         self.size = size
         self.active = flag
+        self.flipped = False # changed by mouse click
         self.next_gen_active = flag
         self.color = (0, 0, 0)
         self.neighbors = []
@@ -228,8 +235,6 @@ class Rect:
 
         if self.active:
             self.color = (255, 255, 255)
-        if self.id == 12:
-            self.color = (255, 0,0)
 
     def add_neighbor(self, neighbor):
         self.neighbors.append(neighbor)
@@ -269,6 +274,7 @@ class Rect:
 
     def next_gen(self):
         self.set_active(self.next_gen_active)
+        self.flipped = False
 
     def toggle_active(self):
         self.active = not self.active
